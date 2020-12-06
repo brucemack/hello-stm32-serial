@@ -41,10 +41,21 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+extern void CppMain_setup();
+extern void CppMain_loop();
+
+// NEEDED FOR SERIAL WIRE DEBUG
+int _write(int file, char* ptr, int len) {
+	for (int i = 0; i < len; i++)
+		ITM_SendChar((*ptr++));
+	return len;
+}
 
 /* USER CODE END PV */
 
@@ -53,21 +64,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-
-uint8_t uart_byte;
-uint8_t buffer[128];
-int buffer_ptr = 0;
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if (huart->Instance == USART1)
-	{
-		buffer[buffer_ptr++] = uart_byte;
-		// Schedule another receive
-		HAL_UART_Receive_IT(&huart1, &uart_byte, 1);
-	}
-}
 
 /* USER CODE END PFP */
 
@@ -106,21 +104,16 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  	int count = 0;
-	// Schedule another receive
-	HAL_UART_Receive_IT(&huart1, &uart_byte, 1);
+  CppMain_setup();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // Send a message
-	  char msg[80];
-	  sprintf(msg,"Hello %d\n", count++);
-	  HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 5);
-	  HAL_Delay(1000);
+	  CppMain_loop();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -171,6 +164,40 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
